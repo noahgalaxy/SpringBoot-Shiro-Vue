@@ -11,6 +11,8 @@ import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.session.Session;
 import org.apache.shiro.subject.Subject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +23,8 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class LoginServiceImpl implements LoginService {
+	private Logger logger = LoggerFactory.getLogger(this.getClass().getName());
+
 
 	@Autowired
 	private LoginDao loginDao;
@@ -35,14 +39,18 @@ public class LoginServiceImpl implements LoginService {
 		String username = jsonObject.getString("username");
 		String password = jsonObject.getString("password");
 		JSONObject info = new JSONObject();
+
 		Subject currentUser = SecurityUtils.getSubject();
 		UsernamePasswordToken token = new UsernamePasswordToken(username, password);
+		logger.info("进入authLogin，username【"+username+"】, password【"+password+" 】");
 		try {
 			currentUser.login(token);
 			info.put("result", "success");
+
 		} catch (AuthenticationException e) {
 			info.put("result", "fail");
 		}
+		logger.info("进入authLogin鉴权完成"+info.toString());
 		return CommonUtil.successJson(info);
 	}
 
@@ -77,6 +85,8 @@ public class LoginServiceImpl implements LoginService {
 	public JSONObject logout() {
 		try {
 			Subject currentUser = SecurityUtils.getSubject();
+			logger.info("用户登出 Subject currentUser【"+currentUser.toString()+"】");
+
 			currentUser.logout();
 		} catch (Exception e) {
 		}

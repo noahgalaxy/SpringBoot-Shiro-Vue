@@ -83,7 +83,20 @@ module.exports = {
           limit: 100000,
           name: utils.assetsPath('fonts/[name].[hash:7].[ext]')
         }
-      }
+      },
+      // {
+      //   test:/\.css$/,
+      //   // loader: 'css-loader',
+      //   include: [
+      //     resolve('node_modules/normalize.css'),
+      //     resolve('node_modules/nprogress'),
+      //     resolve('node_modules/element-ui')
+      //   ],
+      //   use:[//读取css文件
+      //     'style-loader',//将js文件读取到html中
+      //     'css-loader',
+      //   ]
+      // }
     ]
   },
   node: {

@@ -20,6 +20,7 @@ import java.util.Collection;
  * @author: hxy
  * @description: 自定义Realm
  * @date: 2017/10/24 10:06
+ * Realm是和数据库交互，查看用户信息，权限信息这两项
  */
 public class UserRealm extends AuthorizingRealm {
 	private Logger logger = LoggerFactory.getLogger(UserRealm.class);
@@ -29,26 +30,46 @@ public class UserRealm extends AuthorizingRealm {
 
 	@Override
 	@SuppressWarnings("unchecked")
+	/**
+	 * 授权
+	 * 每次访问带有权限的权限链接的时候，都会走一次这个方法，尽管你登陆了之后，也需要
+	 */
 	protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals) {
 		Session session = SecurityUtils.getSubject().getSession();
 		//查询用户的权限
 		JSONObject permission = (JSONObject) session.getAttribute(Constants.SESSION_USER_PERMISSION);
 		logger.info("permission的值为:" + permission);
 		logger.info("本用户权限为:" + permission.get("permissionList"));
-		//为当前用户设置角色和权限
+
+		/*
+		为当前用户设置角色和权限，权限是从数据库里面查出来的，封装到permissionList里面的，如下：
+		"permissionList":["article:list","user:list","user:add","role:update","article:add","role:list","article:update","user:update","role:delete","role:add"],
+		[角色role:权限]
+		 */
 		SimpleAuthorizationInfo authorizationInfo = new SimpleAuthorizationInfo();
 		authorizationInfo.addStringPermissions((Collection<String>) permission.get("permissionList"));
+		/*
+			如果由角色的话，就是通过这里的方法进行添加角色
+			authorizationInfo.addRole();
+			authorizationInfo.addRoles();
+		 */
+
 		return authorizationInfo;
 	}
 
 	/**
-	 * 验证当前登录的Subject
+	 * 认证：验证当前登录的Subject
+	 * 外面的方法调用currentUser.login(token)的时候会进入到这里里面进行验证，验证的时候这里面会去数据库进行查询，外面传过来的token是一个token对象
 	 * LoginController.login()方法中执行Subject.login()时 执行此方法
+	 *
+	 * 在 shiro 中，用户需要提供 principals （身份）和 credentials（证明）给 shiro，从而应用能验证用户身份：
+	 * principals：身份，即主体的标识属性，可以是任何东西，如用户名、邮箱等，唯一即可。一个主体可以有多个 principals，但只有一个 Primary principals，一般是用户名 / 密码 / 手机号。
+	 * credentials：证明 / 凭证，即只有主体知道的安全值，如密码 / 数字证书等
 	 */
 	@Override
 	protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken authcToken) throws AuthenticationException {
+		// 获取用户密码，从token里面获取用户名(Principal)、和密码(Credentials)
 		String loginName = (String) authcToken.getPrincipal();
-		// 获取用户密码
 		String password = new String((char[]) authcToken.getCredentials());
 		JSONObject user = loginService.getUser(loginName, password);
 		if (user == null) {
@@ -56,10 +77,13 @@ public class UserRealm extends AuthorizingRealm {
 			throw new UnknownAccountException();
 		}
 		//交给AuthenticatingRealm使用CredentialsMatcher进行密码匹配，如果觉得人家的不好可以自定义实现
+		//这里面的第一个参数是
 		SimpleAuthenticationInfo authenticationInfo = new SimpleAuthenticationInfo(
 				user.getString("username"),
 				user.getString("password"),
 				//ByteSource.Util.bytes("salt"), salt=username+salt,采用明文访问时，不需要此句
+
+//				getName()是获取Realm的名字
 				getName()
 		);
 		//session中不需要保存密码

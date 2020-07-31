@@ -18,6 +18,12 @@ import java.io.PrintWriter;
  */
 public class AjaxPermissionsAuthorizationFilter extends FormAuthenticationFilter {
 
+	/**
+	 * 这是当没有权限的时候如何处理，直接向页面输出没有权限。
+	 * @param request
+	 * @param response
+	 * @return 返回true表示还要有后面的就方法继续处理，返回false表示到这个拦截器就直接处理了。后面不会再有其他的进行处理；
+	 */
 	@Override
 	protected boolean onAccessDenied(ServletRequest request, ServletResponse response) {
 		JSONObject jsonObject = new JSONObject();
